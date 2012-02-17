@@ -3,7 +3,7 @@ defined('C5_EXECUTE') or die("Access Denied.");
 
 class PageSelectorAttributeTypeController extends AttributeTypeController  {
 
-	protected $searchIndexFieldDefinition = '';
+	protected $searchIndexFieldDefinition = 'I 11 DEFAULT 0 NULL';
 
 	public function getValue() {
 		$db = Loader::db();
