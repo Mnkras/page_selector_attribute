@@ -48,7 +48,6 @@ class PageSelectorAttributeTypeController extends AttributeTypeController  {
 	}
 	
 	public function saveForm($data) {
-		$db = Loader::db();
 		$this->saveValue($data['value']);
 	}
 	
