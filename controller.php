@@ -1,12 +1,15 @@
-<?php      
+<?php
+namespace Concrete\Package\PageSelectorAttribute;
+use \Concrete\Core\Attribute\Key\Category as AttributeKeyCategory;
+use \Concrete\Core\Attribute\Type as AttributeType;
 
-defined('C5_EXECUTE') or die(_("Access Denied."));
+defined('C5_EXECUTE') or die("Access Denied.");
 
-class PageSelectorAttributePackage extends Package {
+class Controller extends \Concrete\Core\Package\Package {
 
 	protected $pkgHandle = 'page_selector_attribute';
-	protected $appVersionRequired = '5.4.0';
-	protected $pkgVersion = '1.1';
+	protected $appVersionRequired = '5.7.1';
+	protected $pkgVersion = '2.0';
 	
 	public function getPackageDescription() {
 		return t("Attribute that allows the selection of pages.");
@@ -17,11 +20,11 @@ class PageSelectorAttributePackage extends Package {
 	}
 	
 	public function install() {
-		$pkg = parent::install();
-		$pkgh = Package::getByHandle('page_selector_attribute'); 
-		Loader::model('attribute/categories/collection');
+		parent::install();
+		$pkgh = \Package::getByHandle('page_selector_attribute');
+		\Loader::model('attribute/categories/collection');
 		$col = AttributeKeyCategory::getByHandle('collection');
-		$pageselector = AttributeType::add('page_selector', t('Page Selector'), $pkgh);
+		AttributeType::add('page_selector', t('Page Selector'), $pkgh);
 		$col->associateAttributeKeyType(AttributeType::getByHandle('page_selector'));
 	}
 }

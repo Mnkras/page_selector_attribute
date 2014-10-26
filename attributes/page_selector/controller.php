@@ -1,9 +1,12 @@
-<?php 
+<?php
+namespace Concrete\Package\PageSelectorAttribute\Attribute\PageSelector;
+
+use Loader;
 defined('C5_EXECUTE') or die("Access Denied.");
 
-class PageSelectorAttributeTypeController extends AttributeTypeController  {
+class Controller extends \Concrete\Core\Attribute\Controller  {
 
-	protected $searchIndexFieldDefinition = 'I 11 DEFAULT 0 NULL';
+    protected $searchIndexFieldDefinition = array('type' => 'integer', 'options' => array('default' => 0, 'notnull' => false));
 
 	public function getValue() {
 		$db = Loader::db();
