@@ -39,6 +39,9 @@ class Controller extends \Concrete\Core\Attribute\Controller  {
 
 	public function saveValue($value) {
 		$db = Loader::db();
+        if(!intval($value)) {
+            $value = 0;
+        }
 		$db->Replace('atPageSelector', array('avID' => $this->getAttributeValueID(), 'value' => $value), 'avID', true);
 	}
 	
