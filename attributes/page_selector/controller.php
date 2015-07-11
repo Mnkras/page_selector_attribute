@@ -3,6 +3,7 @@ namespace Concrete\Package\PageSelectorAttribute\Attribute\PageSelector;
 
 use Loader;
 use Page;
+use Permissions;
 defined('C5_EXECUTE') or die("Access Denied.");
 
 class Controller extends \Concrete\Core\Attribute\Controller  {
@@ -68,10 +69,15 @@ class Controller extends \Concrete\Core\Attribute\Controller  {
 		$at_val = $this->getValue();
 		$html = '';
 		$at_page = Page::getByID($at_val);
-		if (is_object($at_page)) {
-			$url = $at_page->getCollectionPath();
-			$name = $at_page->getCollectionName();
-			$html = '<a href="' . $url . '" title="' . $name . '">'.$name . '</a>';
+		if (is_object($at_page) && !$at_page->isInTrash()) {
+			$cpc = new Permissions($at_page);
+			if ($cpc->canViewPage()) {
+				$url = $at_page->getCollectionPath();
+				$name = h($at_page->getCollectionName());
+				$html = '<a href="' . $url . '" title="' . $name . '">' . $name . '</a>';
+			} else {
+				$html = '<a href="" class="page_denied">' . t('access denied') . '</a>';
+			}
 		}
 		return $html;
 	}
