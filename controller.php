@@ -9,7 +9,7 @@ class Controller extends \Concrete\Core\Package\Package {
 
 	protected $pkgHandle = 'page_selector_attribute';
 	protected $appVersionRequired = '5.7.1';
-	protected $pkgVersion = '2.0';
+	protected $pkgVersion = '2.1';
 	
 	public function getPackageDescription() {
 		return t("Attribute that allows the selection of pages.");
