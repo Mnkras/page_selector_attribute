@@ -1,30 +1,39 @@
 <?php
 namespace Concrete\Package\PageSelectorAttribute;
-use \Concrete\Core\Attribute\Key\Category as AttributeKeyCategory;
-use \Concrete\Core\Attribute\Type as AttributeType;
+
+use Concrete\Core\Attribute\Category\CategoryService;
+use Concrete\Core\Attribute\TypeFactory;
 
 defined('C5_EXECUTE') or die("Access Denied.");
 
-class Controller extends \Concrete\Core\Package\Package {
+class Controller extends \Concrete\Core\Package\Package
+{
+    protected $pkgHandle = 'page_selector_attribute';
+    protected $appVersionRequired = '8.0';
+    protected $pkgVersion = '2.1';
 
-	protected $pkgHandle = 'page_selector_attribute';
-	protected $appVersionRequired = '5.7.1';
-	protected $pkgVersion = '2.0';
-	
-	public function getPackageDescription() {
-		return t("Attribute that allows the selection of pages.");
-	}
-	
-	public function getPackageName() {
-		return t("Page Selector Attribute");
-	}
-	
-	public function install() {
-		parent::install();
-		$pkgh = \Package::getByHandle('page_selector_attribute');
-		\Loader::model('attribute/categories/collection');
-		$col = AttributeKeyCategory::getByHandle('collection');
-		AttributeType::add('page_selector', t('Page Selector'), $pkgh);
-		$col->associateAttributeKeyType(AttributeType::getByHandle('page_selector'));
-	}
+    public function getPackageDescription()
+    {
+        return t("Attribute that allows the selection of pages.");
+    }
+
+    public function getPackageName()
+    {
+        return t("Page Selector Attribute");
+    }
+
+    public function install()
+    {
+        $pkg = parent::install();
+        /** @var TypeFactory $factory */
+        $factory = $this->app->make(TypeFactory::class);
+        $type = $factory->getByHandle('page_selector');
+        if (!is_object($type)) {
+            $type = $factory->add('page_selector', t('Page Selector'), $pkg);
+            /** @var CategoryService $service */
+            $service = $this->app->make(CategoryService::class);
+            $col = $service->getByHandle('collection')->getController();
+            $col->associateAttributeKeyType($type);
+        }
+    }
 }
