@@ -17,7 +17,7 @@ class PageSelectorValue extends AbstractValue
     protected $value;
 
     /**
-     * @return integer
+     * @return int
      */
     public function getValue()
     {
@@ -33,7 +33,7 @@ class PageSelectorValue extends AbstractValue
     }
 
     /**
-     * @param integer $value
+     * @param int $value
      */
     public function setValue($value)
     {
