@@ -1,20 +1,26 @@
 <?php
 namespace Concrete\Package\PageSelectorAttribute\Attribute\PageSelector;
 
-use Loader;
+use Concrete\Core\Attribute\FontAwesomeIconFormatter;
+use Concrete\Core\Backup\ContentExporter;
+use Concrete\Core\Backup\ContentImporter\ValueInspector\ValueInspectorInterface;
+use Concrete\Core\Error\ErrorList\Error\Error;
+use Concrete\Core\Error\ErrorList\Error\FieldNotPresentError;
+use Concrete\Core\Error\ErrorList\Field\AttributeField;
+use Concrete\Core\Support\Facade\Application;
+use Concrete\Package\PageSelectorAttribute\Entity\Attribute\Value\Value\PageSelectorValue;
 use Page;
 use Permissions;
-defined('C5_EXECUTE') or die("Access Denied.");
+use Concrete\Core\Attribute\Controller as AttributeTypeController;
 
-class Controller extends \Concrete\Core\Attribute\Controller  {
+class Controller extends AttributeTypeController  {
 
     protected $searchIndexFieldDefinition = array('type' => 'integer', 'options' => array('default' => 0, 'notnull' => false));
 
-	public function getValue() {
-		$db = Loader::db();
-		$value = $db->GetOne("select value from atPageSelector where avID = ?", array($this->getAttributeValueID()));
-		return $value;	
-	}
+    public function getIconFormatter()
+    {
+        return new FontAwesomeIconFormatter('file');
+    }
 	
 	public function searchForm($list) {
 		$PagecID = $this->request('value');
@@ -23,7 +29,7 @@ class Controller extends \Concrete\Core\Attribute\Controller  {
 	}
 	
 	public function search() {
-		$form_selector = Loader::helper('form/page_selector');
+		$form_selector = Application::getFacadeApplication()->make('helper/form/page_selector');
 		print $form_selector->selectPage($this->field('value'), $this->request('value'), false);
 	}
 	
@@ -31,38 +37,23 @@ class Controller extends \Concrete\Core\Attribute\Controller  {
 		if (is_object($this->attributeValue)) {
 			$value = $this->getAttributeValue()->getValue();
 		}
-		$form_selector = Loader::helper('form/page_selector');
-		print $form_selector->selectPage($this->field('value'), $value);
+        $form_selector = Application::getFacadeApplication()->make('helper/form/page_selector');
+        print $form_selector->selectPage($this->field('value'), (isset($value)) ? $value : null);
 	}
 	
 	public function validateForm($p) {
-		return $p['value'] != 0;
-	}
-
-	public function saveValue($value) {
-		$db = Loader::db();
-        if(!intval($value)) {
-            $value = 0;
+        if (intval($p['value']) > 0) {
+            $c = Page::getByID(intval($p['value']));
+            if (is_object($c) && !$c->isError()) {
+                return true;
+            } else {
+                return new Error(t('You must specify a valid page for %s', $this->getAttributeKey()->getAttributeKeyDisplayName()),
+                    new AttributeField($this->getAttributeKey())
+                );
+            }
+        } else {
+            return new FieldNotPresentError(new AttributeField($this->getAttributeKey()));
         }
-		$db->Replace('atPageSelector', array('avID' => $this->getAttributeValueID(), 'value' => $value), 'avID', true);
-	}
-	
-	public function deleteKey() {
-		$db = Loader::db();
-		$arr = $this->attributeKey->getAttributeValueIDList();
-		foreach($arr as $id) {
-			$db->Execute('delete from atPageSelector where avID = ?', array($id));
-		}
-	}
-	
-	public function saveForm($data) {
-		$db = Loader::db();
-		$this->saveValue($data['value']);
-	}
-	
-	public function deleteValue() {
-		$db = Loader::db();
-		$db->Execute('delete from atPageSelector where avID = ?', array($this->getAttributeValueID()));
 	}
 	
 	public function getDisplayValue() {
@@ -81,5 +72,63 @@ class Controller extends \Concrete\Core\Attribute\Controller  {
 		}
 		return $html;
 	}
+
+    public function exportValue(\SimpleXMLElement $akv)
+    {
+        $av = $akv->addChild('value');
+        $cID = $this->getAttributeValue()->getValue();
+        /** @var Number $nh */
+        $nh = Application::getFacadeApplication()->make('helper/number');
+        if ($nh->isInteger($cID)) {
+            $av->addChild('cID', ContentExporter::replacePageWithPlaceHolder($cID));
+        } else {
+            $av->addChild('cID', 0);
+        }
+    }
+
+    /**
+     * @param \SimpleXMLElement $akv
+     * @return bool|string|void
+     */
+    public function importValue(\SimpleXMLElement $akv)
+    {
+        if (isset($akv->value->cID)) {
+            $cIDVal = (string) $akv->value->cID;
+            /** @var ValueInspectorInterface $inspector */
+            $inspector = Application::getFacadeApplication()->make('import/value_inspector');
+            $result = $inspector->inspect($cIDVal);
+            $cID = $result->getReplacedValue();
+            if ($cID) {
+                return $this->createAttributeValue($cID);
+            }
+        }
+    }
+
+    public function createAttributeValue($mixed)
+    {
+        if (is_object($mixed) && method_exists($mixed, 'getCollectionID')) {
+            $mixed = $mixed->getCollectionID();
+        }
+
+        $value = new PageSelectorValue();
+        $value->setValue((int) $mixed);
+        return $value;
+    }
+
+    public function createAttributeValueFromRequest()
+    {
+        $data = $this->post();
+        if (intval($data['value']) > 0) {
+            $c = Page::getByID(intval($data['value']));
+            return $this->createAttributeValue($c);
+        }
+
+        return $this->createAttributeValue(0);
+    }
+
+    public function getAttributeValueClass()
+    {
+        return PageSelectorValue::class;
+    }
 
 }
