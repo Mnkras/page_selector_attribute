@@ -52,7 +52,8 @@ class Controller extends \Concrete\Core\Attribute\Controller  {
 		$arr = $this->attributeKey->getAttributeValueIDList();
 		foreach($arr as $id) {
 			$db->Execute('delete from atPageSelector where avID = ?', array($id));
-		}
+        }
+        parent::deleteKey();
 	}
 	
 	public function saveForm($data) {
